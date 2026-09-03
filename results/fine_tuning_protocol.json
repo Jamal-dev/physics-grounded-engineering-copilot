@@ -1,29 +1,12 @@
 {
-  "status": "validated_not_trained",
-  "reason": "The local host has no CUDA GPU; no adapter-performance claim is made.",
-  "model_configuration": "Qwen/Qwen3-0.6B with LoRA",
-  "dataset": {
-    "training_examples": 136,
-    "validation_examples": 48,
-    "held_out_test_examples": 48,
-    "training_tool_call_examples": 20,
-    "validation_tool_call_examples": 6,
-    "held_out_tool_call_examples": 6,
-    "duplicate_ids": 0
-  },
+  "status": "measured",
+  "aggregate_results": "fine_tuning_results.json",
+  "human_readable_results": "FINE_TUNING_RESULTS.md",
+  "held_out_test_examples": 48,
   "comparison_conditions": [
     "base",
     "base_plus_rag",
     "fine_tuned",
     "fine_tuned_plus_rag"
-  ],
-  "implemented_metrics": [
-    "exact_match",
-    "token_f1",
-    "json_validity",
-    "configured_json_field_accuracy",
-    "tool_decision_accuracy",
-    "latency",
-    "factorial_effect_sizes"
   ]
 }

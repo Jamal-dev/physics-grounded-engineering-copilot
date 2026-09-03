@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from config import settings
 from rag import retrieve
 
 from .comparison import ComparisonRunner
@@ -98,26 +100,41 @@ def main() -> None:
     parser.add_argument("--query", help="Run one qualitative four-way comparison")
     parser.add_argument("--test-file", help="Held-out JSON/JSONL conversational dataset")
     parser.add_argument("--output", help="Prediction JSONL path")
-    parser.add_argument("--top-k", type=int, default=4)
-    parser.add_argument("--scope", help="RAG evidence scope; defaults to .env")
+    parser.add_argument("--top-k", type=int)
+    parser.add_argument("--scope", help="RAG evidence scope; defaults to the config")
+    parser.add_argument("--rag-collection-name")
     parser.add_argument("--min-relevance-score", type=float)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
     config = load_config(args.config)
+    collection_name = str(
+        args.rag_collection_name
+        or config.evaluation.get("rag_collection_name")
+        or settings.collection_name
+    )
+    rag_config = replace(settings, collection_name=collection_name)
+    scope = args.scope or config.evaluation.get("rag_scope") or settings.default_scope
+    top_k = int(args.top_k or config.evaluation.get("rag_top_k", 4))
+    min_relevance_score = (
+        args.min_relevance_score
+        if args.min_relevance_score is not None
+        else config.evaluation.get("rag_min_relevance_score")
+    )
     model = AdapterChatModel.from_config(config, adapter_path=args.adapter)
     runner = ComparisonRunner(
         model,
         lambda query, k: retrieve(
             query,
             k=k,
-            scope=args.scope,
-            min_relevance_score=args.min_relevance_score,
+            scope=str(scope),
+            min_relevance_score=min_relevance_score,
+            config=rag_config,
         ),
     )
     if args.query:
-        result = runner.run(args.query, top_k=args.top_k)
+        result = runner.run(args.query, top_k=top_k)
         payload = result.as_dict()
         if args.output:
             destination = Path(args.output).expanduser().resolve()
@@ -141,7 +158,7 @@ def main() -> None:
         runner,
         test_file,
         output,
-        top_k=args.top_k,
+        top_k=top_k,
         limit=args.limit,
         resume=args.resume,
         json_fields=fields,

@@ -72,7 +72,7 @@ def answer_metrics(
     json_fields: Sequence[str] = (),
     expects_tool_call: bool = False,
     tool_names: Sequence[str] = (),
-) -> dict[str, float]:
+) -> dict[str, float | None]:
     predicted_json = parse_json_answer(prediction)
     reference_json = parse_json_answer(reference)
     result = {
@@ -84,16 +84,20 @@ def answer_metrics(
         ),
     }
     for field in json_fields:
-        result[f"json_field.{field}"] = float(
-            predicted_json is not None
-            and reference_json is not None
-            and _nested(predicted_json, field) == _nested(reference_json, field)
+        reference_value = _nested(reference_json, field)
+        result[f"json_field.{field}"] = (
+            None
+            if reference_json is None or reference_value is None
+            else float(
+                predicted_json is not None
+                and _nested(predicted_json, field) == reference_value
+            )
         )
     return result
 
 
-def _mean(values: Iterable[float]) -> float:
-    items = list(values)
+def _mean(values: Iterable[float | None]) -> float:
+    items = [value for value in values if value is not None and not math.isnan(value)]
     return sum(items) / len(items) if items else math.nan
 
 
@@ -120,7 +124,7 @@ def _effects(by_variant: Mapping[str, Mapping[str, float]]) -> dict[str, Any]:
 def score_records(
     records: Sequence[Mapping[str, Any]], *, json_fields: Sequence[str] = ()
 ) -> dict[str, Any]:
-    collected: dict[str, list[dict[str, float]]] = {
+    collected: dict[str, list[dict[str, float | None]]] = {
         variant.key: [] for variant in VARIANTS
     }
     latencies: dict[str, list[float]] = {variant.key: [] for variant in VARIANTS}
@@ -142,6 +146,7 @@ def score_records(
             latencies[key].append(float(answer.get("latency_seconds", 0.0)))
 
     by_variant: dict[str, dict[str, float]] = {}
+    applicable: dict[str, dict[str, int]] = {}
     for variant in VARIANTS:
         rows = collected[variant.key]
         names = rows[0].keys() if rows else ()
@@ -149,8 +154,13 @@ def score_records(
             name: _mean(row[name] for row in rows) for name in names
         }
         by_variant[variant.key]["latency_seconds"] = _mean(latencies[variant.key])
+        applicable[variant.key] = {
+            name: sum(row[name] is not None for row in rows) for name in names
+        }
+        applicable[variant.key]["latency_seconds"] = len(latencies[variant.key])
     return {
         "examples": len(records),
         "variants": by_variant,
+        "applicable": applicable,
         "effects": _effects(by_variant) if records else {},
     }

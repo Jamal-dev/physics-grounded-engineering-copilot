@@ -51,7 +51,7 @@ VARIANTS = (
     Variant("fine_tuned", "Base model + fine-tuning", use_rag=False, tuned=True),
     Variant(
         "fine_tuned_rag",
-        "Base model + RAG + fine-tuning",
+        "Base model + fine-tuning + RAG",
         use_rag=True,
         tuned=True,
     ),

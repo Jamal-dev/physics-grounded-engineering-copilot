@@ -5,13 +5,11 @@
 A local, evidence-first AI engineering system that combines scoped RAG, a
 bounded LLM agent, and analytical verification of a numerical physics tool.
 Docling parses engineering files, ChromaDB stores provenance-preserving evidence,
-and Ollama or OpenAI supplies the answer model. An optional LoRA track defines a
-leakage-aware training and four-condition evaluation protocol without claiming
-an unexecuted GPU result.
+and Ollama or OpenAI supplies the answer model. A LoRA track adds leakage-aware
+training and a measured four-condition evaluation.
 
-The project is intentionally evidence-first: it distinguishes implemented and
-tested functionality from the optional LoRA experiment, for which no
-performance claim is made until a GPU run is evaluated.
+The project is intentionally evidence-first: implemented features, training
+provenance, held-out measurements, and limitations are reported separately.
 
 For a compact technical review, see the [project card](docs/PROJECT_CARD.md).
 
@@ -35,7 +33,7 @@ flowchart LR
     V --> UI
 ```
 
-## What is demonstrated
+## Capabilities and evidence
 
 - Multi-format ingestion with document/page provenance and deterministic IDs
 - Isolated evidence scopes, minimum-relevance gating, prompt-injection filtering,
@@ -249,9 +247,11 @@ After training and indexing the evaluation documents, run the untouched test
 split:
 
 ```bash
+python -m fine_tuning.index_corpus \
+  --config fine_tuning/configs/fem_weakform_qwen3.yaml
 python -m fine_tuning.evaluate \
   --config fine_tuning/configs/fem_weakform_qwen3.yaml \
-  --top-k 4 --resume
+  --resume
 ```
 
 The runner loads one base checkpoint, disables/enables its LoRA adapter, and
@@ -259,6 +259,14 @@ reuses one retrieval result for the two RAG conditions. It reports per-variant
 metrics plus the fine-tuning effect with and without retrieval and their
 interaction. Configure `FINE_TUNE_CONFIG` in `.env` to expose the same four
 answers in the Streamlit **Fine-tuning comparison** tab.
+
+Measured on the untouched 48-question test split, token F1 was 9.6% for the
+base model, 76.1% for base+RAG, 28.7% for base+fine-tuning, and 87.1% for
+base+fine-tuning+RAG. These overlap gains do not imply uniformly better output:
+valid JSON fell to 2.1% for fine-tuning alone and 18.8% for the combined system
+because many adapter-enabled outputs reached the fixed generation cap. See the
+[complete results](results/FINE_TUNING_RESULTS.md) for confidence intervals,
+structured metrics, and limitations.
 
 See [the fine-tuning guide](docs/FINE_TUNING.md) for data preparation,
 configuration, commands, architecture, and interpretation.
@@ -377,15 +385,15 @@ definitions, model-specific prompts, the selection rule, and validity threats.
 
 ## Parameter-efficient fine-tuning
 
-The optional [LoRA track](docs/FINE_TUNING.md) targets behavior rather than
+The [LoRA track](docs/FINE_TUNING.md) targets behavior rather than
 document memorization: structured engineering answers, evidence citations,
-abstention, and tool routing. Its data builder preserves source hashes, excludes
-the held-out 15-question test split, and writes private passages and adapters
-only below `.data/`.
+abstention, and tool routing. Training and retrieval indexing exclude the
+held-out 48-question test split, and private predictions and adapters remain
+below `.data/`.
 
-The intended evaluation compares four systems independently: base model,
-base+RAG, QLoRA-only, and QLoRA+RAG. The repository does not claim a fine-tuning
-gain until that GPU experiment has been executed and evaluated.
+The evaluation compares four systems independently: base model, base+RAG,
+LoRA-only, and LoRA+RAG. Aggregate held-out scores and the complete measurement
+protocol are published in [the fine-tuning results](results/FINE_TUNING_RESULTS.md).
 
 ## Reproducibility and limitations
 

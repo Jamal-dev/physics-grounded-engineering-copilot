@@ -1,0 +1,25 @@
+variant,label,metric,score,ci_low,ci_high,n
+base,Base model,Token F1,0.09579985723529694,0.08307499408850726,0.10873069052107891,48
+base,Base model,Valid JSON,0.9166666666666666,0.8333333333333334,0.9791666666666666,48
+base,Base model,Status accuracy,0.0,0.0,0.0,48
+base,Base model,Boundary assessment accuracy,0.0,0.0,0.0,48
+base,Base model,Tool-decision accuracy,0.16666666666666666,0.0625,0.2708333333333333,48
+base,Base model,Exact match,0.0,0.0,0.0,48
+base_rag,Base model + RAG,Token F1,0.7610578743163768,0.6710468268929041,0.8430267266681101,48
+base_rag,Base model + RAG,Valid JSON,0.75,0.625,0.875,48
+base_rag,Base model + RAG,Status accuracy,0.1875,0.08333333333333333,0.3125,48
+base_rag,Base model + RAG,Boundary assessment accuracy,0.5625,0.4166666666666667,0.7083333333333334,48
+base_rag,Base model + RAG,Tool-decision accuracy,0.875,0.7708333333333334,0.9583333333333334,48
+base_rag,Base model + RAG,Exact match,0.0,0.0,0.0,48
+fine_tuned,Base model + fine-tuning,Token F1,0.2869354924370415,0.25987704632767467,0.31426981291105965,48
+fine_tuned,Base model + fine-tuning,Valid JSON,0.020833333333333332,0.0,0.0625,48
+fine_tuned,Base model + fine-tuning,Status accuracy,0.0,0.0,0.0,48
+fine_tuned,Base model + fine-tuning,Boundary assessment accuracy,0.0,0.0,0.0,48
+fine_tuned,Base model + fine-tuning,Tool-decision accuracy,0.7083333333333334,0.5833333333333334,0.8333333333333334,48
+fine_tuned,Base model + fine-tuning,Exact match,0.0,0.0,0.0,48
+fine_tuned_rag,Base model + fine-tuning + RAG,Token F1,0.8713274376074306,0.8441170503006657,0.8957254482306113,48
+fine_tuned_rag,Base model + fine-tuning + RAG,Valid JSON,0.1875,0.08333333333333333,0.3125,48
+fine_tuned_rag,Base model + fine-tuning + RAG,Status accuracy,0.1875,0.08333333333333333,0.3125,48
+fine_tuned_rag,Base model + fine-tuning + RAG,Boundary assessment accuracy,0.1875,0.08333333333333333,0.3125,48
+fine_tuned_rag,Base model + fine-tuning + RAG,Tool-decision accuracy,0.3958333333333333,0.25,0.5416666666666666,48
+fine_tuned_rag,Base model + fine-tuning + RAG,Exact match,0.020833333333333332,0.0,0.0625,48

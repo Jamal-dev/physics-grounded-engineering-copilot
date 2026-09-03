@@ -2,7 +2,7 @@
 
 This extension trains a small LoRA adapter while keeping retrieval and model
 adaptation independent. It supports any Hugging Face causal chat model whose
-tokenizer has a chat template; the included Qwen/FEM file is an example
+tokenizer has a chat template; the included Qwen/FEM file is a reference
 configuration, not a hard-coded backend.
 
 ## Architecture
@@ -16,7 +16,7 @@ fine_tuning/
   comparison.py   shared retrieval and the four experimental conditions
   metrics.py      generic/reference/structured metrics and effect sizes
   evaluate.py     resumable single-query and held-out evaluation CLI
-  configs/        model/task-specific examples only
+  configs/        model/task-specific reference configurations
 ```
 
 The comparison is a 2x2 experiment:
@@ -78,7 +78,15 @@ switches such as `enable_thinking` stay consistent.
 
 ## Evaluate a query in all four conditions
 
-Index the relevant documents first, then run:
+Build the comparison index from the training split, then run:
+
+```bash
+conda run --no-capture-output -n local-rag \
+  python -m fine_tuning.index_corpus \
+  --config fine_tuning/configs/fem_weakform_qwen3.yaml
+```
+
+The held-out validation and test answers are never placed in this index. Then run:
 
 ```bash
 conda run --no-capture-output -n local-rag \
@@ -96,7 +104,7 @@ improvement.
 conda run --no-capture-output -n local-rag \
   python -m fine_tuning.evaluate \
   --config fine_tuning/configs/fem_weakform_qwen3.yaml \
-  --top-k 4 --resume
+  --resume
 ```
 
 Each completed example is flushed to JSONL, so `--resume` can continue an
@@ -114,6 +122,18 @@ Use the untouched test split only once the YAML, prompts, decoding, retrieval
 settings, and field metrics have been selected on training/validation data.
 Inspect failures as well as aggregate means; text overlap cannot by itself
 establish mathematical correctness or citation faithfulness.
+
+The measured four-condition table, confidence intervals, and observed output
+truncation rates are in [the published results](../results/FINE_TUNING_RESULTS.md).
+
+After evaluation, validate every test ID, condition, reference, and retrieval
+source before publishing aggregate-only artifacts:
+
+```bash
+conda run --no-capture-output -n local-rag \
+  python -m fine_tuning.publish_results \
+  --config fine_tuning/configs/fem_weakform_qwen3.yaml
+```
 
 ## Dataset contract
 

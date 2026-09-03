@@ -1,0 +1,277 @@
+{
+  "status": "measured",
+  "model": "Qwen/Qwen3-0.6B",
+  "training": {
+    "method": "LoRA",
+    "epochs": 1,
+    "examples": 136,
+    "sha256": "f0e0ff32c19b96fb26b0f04b0df3a327e0fa79eb77723a29d1a00ad79ed16d19"
+  },
+  "validation": {
+    "examples": 48,
+    "sha256": "a35aec398c8ce98cad1e5468a8e0a3de0ef7fa8fa88ccb13943091e6150975cb"
+  },
+  "test": {
+    "examples": 48,
+    "sha256": "6fd10ced2730b9f39ff6395204cb41aaacb0d00f945b308ddda96e4491d16866",
+    "split_prompt_collisions": {
+      "train_validation": 0,
+      "train_test": 0,
+      "validation_test": 0
+    }
+  },
+  "retrieval": {
+    "source_split": "train",
+    "source_examples": 136,
+    "embedding_model": "embeddinggemma",
+    "chunk_words": 200,
+    "overlap_words": 50,
+    "top_k": 3
+  },
+  "generation": {
+    "max_new_tokens": 384,
+    "do_sample": false,
+    "outputs_at_token_cap": {
+      "base": 0,
+      "base_rag": 8,
+      "fine_tuned": 34,
+      "fine_tuned_rag": 27
+    }
+  },
+  "metrics": {
+    "examples": 48,
+    "variants": {
+      "base": {
+        "exact_match": 0.0,
+        "token_f1": 0.09579985723529694,
+        "json_valid": 0.9166666666666666,
+        "tool_decision_accuracy": 0.16666666666666666,
+        "json_field.status": 0.0,
+        "json_field.boundary_condition_assessment.sufficient": 0.0,
+        "latency_seconds": 7.046699050605336
+      },
+      "base_rag": {
+        "exact_match": 0.0,
+        "token_f1": 0.7610578743163768,
+        "json_valid": 0.75,
+        "tool_decision_accuracy": 0.875,
+        "json_field.status": 0.1875,
+        "json_field.boundary_condition_assessment.sufficient": 0.5625,
+        "latency_seconds": 41.484821745061105
+      },
+      "fine_tuned": {
+        "exact_match": 0.0,
+        "token_f1": 0.2869354924370415,
+        "json_valid": 0.020833333333333332,
+        "tool_decision_accuracy": 0.7083333333333334,
+        "json_field.status": 0.0,
+        "json_field.boundary_condition_assessment.sufficient": 0.0,
+        "latency_seconds": 33.81820334820835
+      },
+      "fine_tuned_rag": {
+        "exact_match": 0.020833333333333332,
+        "token_f1": 0.8713274376074306,
+        "json_valid": 0.1875,
+        "tool_decision_accuracy": 0.3958333333333333,
+        "json_field.status": 0.1875,
+        "json_field.boundary_condition_assessment.sufficient": 0.1875,
+        "latency_seconds": 54.97036980614515
+      }
+    },
+    "applicable": {
+      "base": {
+        "exact_match": 48,
+        "token_f1": 48,
+        "json_valid": 48,
+        "tool_decision_accuracy": 48,
+        "json_field.status": 48,
+        "json_field.boundary_condition_assessment.sufficient": 48,
+        "latency_seconds": 48
+      },
+      "base_rag": {
+        "exact_match": 48,
+        "token_f1": 48,
+        "json_valid": 48,
+        "tool_decision_accuracy": 48,
+        "json_field.status": 48,
+        "json_field.boundary_condition_assessment.sufficient": 48,
+        "latency_seconds": 48
+      },
+      "fine_tuned": {
+        "exact_match": 48,
+        "token_f1": 48,
+        "json_valid": 48,
+        "tool_decision_accuracy": 48,
+        "json_field.status": 48,
+        "json_field.boundary_condition_assessment.sufficient": 48,
+        "latency_seconds": 48
+      },
+      "fine_tuned_rag": {
+        "exact_match": 48,
+        "token_f1": 48,
+        "json_valid": 48,
+        "tool_decision_accuracy": 48,
+        "json_field.status": 48,
+        "json_field.boundary_condition_assessment.sufficient": 48,
+        "latency_seconds": 48
+      }
+    },
+    "effects": {
+      "exact_match": {
+        "fine_tuning_without_rag": 0.0,
+        "fine_tuning_with_rag": 0.020833333333333332,
+        "rag_on_base": 0.0,
+        "rag_on_fine_tuned": 0.020833333333333332,
+        "rag_fine_tuning_interaction": 0.020833333333333332
+      },
+      "json_field.boundary_condition_assessment.sufficient": {
+        "fine_tuning_without_rag": 0.0,
+        "fine_tuning_with_rag": -0.375,
+        "rag_on_base": 0.5625,
+        "rag_on_fine_tuned": 0.1875,
+        "rag_fine_tuning_interaction": -0.375
+      },
+      "json_field.status": {
+        "fine_tuning_without_rag": 0.0,
+        "fine_tuning_with_rag": 0.0,
+        "rag_on_base": 0.1875,
+        "rag_on_fine_tuned": 0.1875,
+        "rag_fine_tuning_interaction": 0.0
+      },
+      "json_valid": {
+        "fine_tuning_without_rag": -0.8958333333333333,
+        "fine_tuning_with_rag": -0.5625,
+        "rag_on_base": -0.16666666666666663,
+        "rag_on_fine_tuned": 0.16666666666666666,
+        "rag_fine_tuning_interaction": 0.33333333333333326
+      },
+      "latency_seconds": {
+        "fine_tuning_without_rag": 26.771504297603013,
+        "fine_tuning_with_rag": 13.485548061084046,
+        "rag_on_base": 34.43812269445577,
+        "rag_on_fine_tuned": 21.1521664579368,
+        "rag_fine_tuning_interaction": -13.28595623651897
+      },
+      "token_f1": {
+        "fine_tuning_without_rag": 0.19113563520174454,
+        "fine_tuning_with_rag": 0.11026956329105375,
+        "rag_on_base": 0.6652580170810799,
+        "rag_on_fine_tuned": 0.5843919451703892,
+        "rag_fine_tuning_interaction": -0.08086607191069073
+      },
+      "tool_decision_accuracy": {
+        "fine_tuning_without_rag": 0.5416666666666667,
+        "fine_tuning_with_rag": -0.4791666666666667,
+        "rag_on_base": 0.7083333333333334,
+        "rag_on_fine_tuned": -0.31250000000000006,
+        "rag_fine_tuning_interaction": -1.0208333333333335
+      }
+    }
+  },
+  "bootstrap_intervals": {
+    "base": {
+      "token_f1": {
+        "low": 0.08307499408850726,
+        "high": 0.10873069052107891
+      },
+      "json_valid": {
+        "low": 0.8333333333333334,
+        "high": 0.9791666666666666
+      },
+      "json_field.status": {
+        "low": 0.0,
+        "high": 0.0
+      },
+      "json_field.boundary_condition_assessment.sufficient": {
+        "low": 0.0,
+        "high": 0.0
+      },
+      "tool_decision_accuracy": {
+        "low": 0.0625,
+        "high": 0.2708333333333333
+      },
+      "exact_match": {
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "base_rag": {
+      "token_f1": {
+        "low": 0.6710468268929041,
+        "high": 0.8430267266681101
+      },
+      "json_valid": {
+        "low": 0.625,
+        "high": 0.875
+      },
+      "json_field.status": {
+        "low": 0.08333333333333333,
+        "high": 0.3125
+      },
+      "json_field.boundary_condition_assessment.sufficient": {
+        "low": 0.4166666666666667,
+        "high": 0.7083333333333334
+      },
+      "tool_decision_accuracy": {
+        "low": 0.7708333333333334,
+        "high": 0.9583333333333334
+      },
+      "exact_match": {
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "fine_tuned": {
+      "token_f1": {
+        "low": 0.25987704632767467,
+        "high": 0.31426981291105965
+      },
+      "json_valid": {
+        "low": 0.0,
+        "high": 0.0625
+      },
+      "json_field.status": {
+        "low": 0.0,
+        "high": 0.0
+      },
+      "json_field.boundary_condition_assessment.sufficient": {
+        "low": 0.0,
+        "high": 0.0
+      },
+      "tool_decision_accuracy": {
+        "low": 0.5833333333333334,
+        "high": 0.8333333333333334
+      },
+      "exact_match": {
+        "low": 0.0,
+        "high": 0.0
+      }
+    },
+    "fine_tuned_rag": {
+      "token_f1": {
+        "low": 0.8441170503006657,
+        "high": 0.8957254482306113
+      },
+      "json_valid": {
+        "low": 0.08333333333333333,
+        "high": 0.3125
+      },
+      "json_field.status": {
+        "low": 0.08333333333333333,
+        "high": 0.3125
+      },
+      "json_field.boundary_condition_assessment.sufficient": {
+        "low": 0.08333333333333333,
+        "high": 0.3125
+      },
+      "tool_decision_accuracy": {
+        "low": 0.25,
+        "high": 0.5416666666666666
+      },
+      "exact_match": {
+        "low": 0.0,
+        "high": 0.0625
+      }
+    }
+  }
+}

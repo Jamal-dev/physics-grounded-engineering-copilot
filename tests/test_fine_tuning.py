@@ -13,7 +13,7 @@ from fine_tuning.data import (
     load_and_validate,
     split_prompt_collisions,
 )
-from fine_tuning.metrics import score_records, token_f1
+from fine_tuning.metrics import answer_metrics, score_records, token_f1
 
 
 class FineTuningDataTests(unittest.TestCase):
@@ -148,6 +148,17 @@ class ComparisonTests(unittest.TestCase):
             1.0,
         )
         self.assertEqual(token_f1("a a b", "a b b"), 2 / 3)
+
+    def test_missing_reference_json_field_is_not_scored_as_correct(self) -> None:
+        metrics = answer_metrics(
+            '{"status": "correct"}',
+            '{"status": "correct"}',
+            json_fields=["status", "boundary_condition_assessment.sufficient"],
+        )
+        self.assertEqual(metrics["json_field.status"], 1.0)
+        self.assertIsNone(
+            metrics["json_field.boundary_condition_assessment.sufficient"]
+        )
 
 
 if __name__ == "__main__":

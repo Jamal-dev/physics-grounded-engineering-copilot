@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -352,6 +353,46 @@ with fine_tune_tab:
         "This 2x2 comparison uses one Hugging Face base checkpoint, toggles its "
         "LoRA adapter, and reuses the same retrieved passages for both RAG answers."
     )
+    aggregate_path = Path(__file__).parent / "results" / "fine_tuning_results.json"
+    chart_path = Path(__file__).parent / "results" / "fine_tuning_comparison.png"
+    if aggregate_path.is_file():
+        aggregate = json.loads(aggregate_path.read_text(encoding="utf-8"))
+        metric_rows = []
+        labels = {
+            "base": "Base model",
+            "base_rag": "Base model + RAG",
+            "fine_tuned": "Base model + fine-tuning",
+            "fine_tuned_rag": "Base model + fine-tuning + RAG",
+        }
+        for key, label in labels.items():
+            values = aggregate["metrics"]["variants"][key]
+            metric_rows.append(
+                {
+                    "Condition": label,
+                    "Token F1": values["token_f1"],
+                    "Valid JSON": values["json_valid"],
+                    "Status accuracy": values["json_field.status"],
+                    "Tool decision": values["tool_decision_accuracy"],
+                }
+            )
+        st.dataframe(
+            pd.DataFrame(metric_rows).style.format(
+                {
+                    "Token F1": "{:.1%}",
+                    "Valid JSON": "{:.1%}",
+                    "Status accuracy": "{:.1%}",
+                    "Tool decision": "{:.1%}",
+                }
+            ),
+            width="stretch",
+            hide_index=True,
+        )
+        st.caption(
+            "Measured on 48 held-out questions; the retrieval index contains "
+            "training-split examples only."
+        )
+        if chart_path.is_file():
+            st.image(str(chart_path))
     config_path = settings.fine_tune_config
     if config_path is None:
         st.info(
@@ -364,6 +405,22 @@ with fine_tune_tab:
         from fine_tuning.config import load_config
 
         fine_tune_config = load_config(config_path)
+        fine_collection = str(
+            fine_tune_config.evaluation.get(
+                "rag_collection_name", settings.collection_name
+            )
+        )
+        fine_rag_config = replace(settings, collection_name=fine_collection)
+        fine_scope = str(
+            fine_tune_config.evaluation.get("rag_scope", settings.default_scope)
+        )
+        fine_top_k = int(fine_tune_config.evaluation.get("rag_top_k", 4))
+        fine_threshold = fine_tune_config.evaluation.get("rag_min_relevance_score")
+        try:
+            fine_chunk_count = indexed_chunk_count(fine_rag_config)
+        except Exception as exc:
+            fine_chunk_count = 0
+            st.warning(f"Cannot open the comparison retrieval index: {exc}")
         adapter_path = settings.fine_tune_adapter or fine_tune_config.adapter_dir
         if not adapter_path.is_dir():
             st.warning(f"Fine-tuned adapter not found: {adapter_path}")
@@ -378,10 +435,10 @@ with fine_tune_tab:
             )
             compare_fine_tuning = st.button(
                 "Run four-way comparison",
-                disabled=not fine_tune_question or chunk_count == 0,
+                disabled=not fine_tune_question or fine_chunk_count == 0,
             )
-            if chunk_count == 0:
-                st.caption("Index at least one relevant document to enable RAG.")
+            if fine_chunk_count == 0:
+                st.caption("Build the training-only comparison index to enable RAG.")
             if compare_fine_tuning:
                 with st.spinner("Loading the base model and running four answers…"):
                     try:
@@ -395,12 +452,13 @@ with fine_tune_tab:
                             lambda query, k: retrieve(
                                 query,
                                 k=k,
-                                scope=scope,
-                                min_relevance_score=min_relevance_score,
+                                scope=fine_scope,
+                                min_relevance_score=fine_threshold,
+                                config=fine_rag_config,
                             ),
                         )
                         comparison = runner.run(
-                            fine_tune_question, top_k=top_k
+                            fine_tune_question, top_k=fine_top_k
                         )
                     except Exception as exc:
                         st.exception(exc)

@@ -5,6 +5,7 @@ app:
 
 test:
 	python -m unittest discover -s tests -v
+	python -m experiments.scan_public_language
 
 lint:
 	ruff check .

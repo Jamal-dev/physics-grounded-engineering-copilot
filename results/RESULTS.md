@@ -35,3 +35,6 @@ results below were reported after selection.
 - The 50 questions come from one engineering textbook, so results may not transfer unchanged to another corpus.
 - Models with a 512-token context can truncate some 400- and 800-word chunks; the result reflects deployed behavior.
 - Page recall is diagnostic only. Large chunks can touch a labeled page without carrying the answer, so evidence recall is the selection metric.
+
+The separate [fine-tuning and RAG evaluation](FINE_TUNING_RESULTS.md) reports
+the four measured generation conditions on its 48-question held-out split.
