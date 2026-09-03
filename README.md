@@ -1,5 +1,7 @@
 # Physics-Grounded Engineering Copilot
 
+[![CI](https://github.com/Jamal-dev/physics-grounded-engineering-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/Jamal-dev/physics-grounded-engineering-copilot/actions/workflows/ci.yml)
+
 A local, evidence-first AI engineering system that combines scoped RAG, a
 bounded LLM agent, and analytical verification of a numerical physics tool.
 Docling parses engineering files, ChromaDB stores provenance-preserving evidence,
