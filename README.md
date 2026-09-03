@@ -106,9 +106,11 @@ Enter a question and select **Compare answers**. The interface shows:
 - **After RAG:** the same model answers from passages retrieved from the indexed
   documents, with citations and inspectable evidence.
 
-The general answer is also used as semantic query-expansion vocabulary. It can
-help retrieval match the terminology used by a document, but it is never passed
-to the final grounded-answer prompt as evidence.
+The opening portion of the general answer is also used as bounded semantic
+query-expansion vocabulary. It can help retrieval match the terminology used by
+a document, but it is never passed to the final grounded-answer prompt as
+evidence. The bound limits contamination from unsupported details in the
+ungrounded response.
 
 The poroelasticity example uses this question:
 
@@ -132,8 +134,13 @@ Common options:
 ```dotenv
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_CHAT_MODEL=llama3.2:3b
-OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_EMBED_MODEL=embeddinggemma
+OLLAMA_EMBED_NUM_CTX=2048
 RAG_DATA_DIR=.data
+RAG_COLLECTION_NAME=document_rag_embeddinggemma_w200_o50_p298_483
+RAG_CHUNK_WORDS=200
+RAG_CHUNK_OVERLAP=50
+RAG_EMBED_DOCUMENT_TITLE=Theory of Porous Media
 RAG_EXAMPLE_DOCUMENT=path/to/your/document.pdf
 RAG_DEFAULT_SCOPE=default
 RAG_MIN_RELEVANCE_SCORE=0.45
@@ -167,8 +174,8 @@ and the retrieved evidence.
 ## Adapting the tool
 
 - Change the answer model with `OLLAMA_CHAT_MODEL` or the OpenAI settings.
-- Change the embedding model with `OLLAMA_EMBED_MODEL`; use a new collection
-  after changing embeddings.
+- Change the embedding model with `OLLAMA_EMBED_MODEL`; always use a new
+  `RAG_COLLECTION_NAME` after changing the model, prompts, or chunk settings.
 - Use the Streamlit interface as-is or import `ingest`, `ask_without_rag`, and
   `ask` from `rag.py` in another application.
 - Set `RAG_DATA_DIR` when persistent indexes should live outside the repository.
@@ -319,6 +326,18 @@ Evidence Recall@k is intentionally stricter than matching a page number. A hit
 must retrieve a chunk that both overlaps the labeled page and contains every
 reviewed evidence term. Page Recall@k is also reported as a diagnostic because
 large chunks can touch the correct page without containing the answer.
+
+The application defaults now use that selected model and chunking strategy in a
+configuration-specific Chroma collection. To build the operational index from
+the private corpus exported during the study, run:
+
+```bash
+python -m experiments.deploy_selected_index --scope poromechanics
+```
+
+The earlier Nomic collection is not modified or mixed with the selected model's
+vectors. For another corpus, set `RAG_EMBED_DOCUMENT_TITLE`, use a fresh
+collection name, and index through the application or CLI.
 
 ### Reproduce the experiment
 

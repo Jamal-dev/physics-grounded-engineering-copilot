@@ -1,4 +1,4 @@
-.PHONY: analyze app benchmark lint physics test
+.PHONY: analyze app benchmark deploy-selected lint physics test
 
 app:
 	streamlit run app.py
@@ -14,6 +14,9 @@ physics:
 
 benchmark:
 	python -m experiments.run_retrieval_benchmark
+
+deploy-selected:
+	python -m experiments.deploy_selected_index
 
 analyze:
 	python -m experiments.analyze_results

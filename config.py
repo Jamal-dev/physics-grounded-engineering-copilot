@@ -39,12 +39,20 @@ class Settings:
     )
     chat_model: str = os.getenv("OLLAMA_CHAT_MODEL", "llama3.2:3b")
     embedding_model: str = os.getenv(
-        "OLLAMA_EMBED_MODEL", "nomic-embed-text"
+        "OLLAMA_EMBED_MODEL", "embeddinggemma"
+    )
+    embedding_context_tokens: int = int(
+        os.getenv("OLLAMA_EMBED_NUM_CTX", "2048")
+    )
+    embedding_document_title: str = os.getenv(
+        "RAG_EMBED_DOCUMENT_TITLE", "Theory of Porous Media"
     )
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
     collection_name: str = os.getenv(
-        "RAG_COLLECTION_NAME", "document_rag"
+        "RAG_COLLECTION_NAME", "document_rag_embeddinggemma_w200_o50_p298_483"
     )
+    chunk_words: int = int(os.getenv("RAG_CHUNK_WORDS", "200"))
+    chunk_overlap_words: int = int(os.getenv("RAG_CHUNK_OVERLAP", "50"))
     default_scope: str = os.getenv("RAG_DEFAULT_SCOPE", "default")
     min_relevance_score: float = float(
         os.getenv("RAG_MIN_RELEVANCE_SCORE", "0.45")
@@ -55,6 +63,16 @@ class Settings:
     fine_tune_adapter: Path | None = _optional_project_path(
         "FINE_TUNE_ADAPTER_PATH"
     )
+
+    def __post_init__(self) -> None:
+        if self.chunk_words < 1:
+            raise ValueError("RAG_CHUNK_WORDS must be positive.")
+        if not 0 <= self.chunk_overlap_words < self.chunk_words:
+            raise ValueError(
+                "RAG_CHUNK_OVERLAP must satisfy 0 <= overlap < chunk size."
+            )
+        if self.embedding_context_tokens < 1:
+            raise ValueError("OLLAMA_EMBED_NUM_CTX must be positive.")
 
     @property
     def chroma_dir(self) -> Path:

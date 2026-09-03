@@ -14,6 +14,7 @@ htmlcov/
 *.egg-info/
 build/
 dist/
+*.whl
 .idea/
 .vscode/
 .DS_Store

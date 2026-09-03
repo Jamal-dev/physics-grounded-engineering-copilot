@@ -69,7 +69,11 @@ with st.sidebar:
         "Minimum relevance", 0.0, 1.0, float(settings.min_relevance_score), 0.01
     )
     scope = st.text_input("Evidence scope", value=settings.default_scope)
-    st.caption(f"Embedding model: {settings.embedding_model}")
+    st.caption(
+        f"Operational retrieval: {settings.embedding_model}; "
+        f"{settings.chunk_words}-word chunks / "
+        f"{settings.chunk_overlap_words}-word overlap"
+    )
 
 ask_tab, agent_tab, physics_tab, study_tab, fine_tune_tab = st.tabs(
     [
@@ -272,7 +276,7 @@ with physics_tab:
                     ]
                 ),
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
 
 with study_tab:
@@ -291,11 +295,21 @@ with study_tab:
         selection = json.loads(selection_path.read_text(encoding="utf-8"))
         chosen = selection["selected_configuration"]
         held_out = {row["k"]: row for row in selection["held_out_test"]}
-        metric_columns = st.columns(4)
-        metric_columns[0].metric("Selected embedding", chosen["model"])
-        metric_columns[1].metric("Chunk / overlap", f"{chosen['chunk_words']} / {chosen['overlap_words']} words")
-        metric_columns[2].metric("Development Recall@5", f"{chosen['development_recall_at_5']:.1%}")
-        metric_columns[3].metric("Held-out Recall@5", f"{held_out[5]['recall_at_k']:.1%}")
+        configuration_columns = st.columns(2)
+        configuration_columns[0].markdown(
+            f"**Selected embedding**\n\n`{chosen['model']}`"
+        )
+        configuration_columns[1].markdown(
+            "**Chunk / overlap**\n\n"
+            f"`{chosen['chunk_words']} / {chosen['overlap_words']} words`"
+        )
+        score_columns = st.columns(2)
+        score_columns[0].metric(
+            "Development Recall@5", f"{chosen['development_recall_at_5']:.1%}"
+        )
+        score_columns[1].metric(
+            "Held-out Recall@5", f"{held_out[5]['recall_at_k']:.1%}"
+        )
 
         for figure_name, caption in (
             ("recall_heatmaps.png", "Development evidence Recall@5 across chunking choices"),
@@ -304,7 +318,7 @@ with study_tab:
         ):
             figure = results_dir / figure_name
             if figure.is_file():
-                st.image(str(figure), caption=caption, use_container_width=True)
+                st.image(str(figure), caption=caption, width="stretch")
 
         summary_path = results_dir / "retrieval_summary.csv"
         if summary_path.is_file():
@@ -323,7 +337,7 @@ with study_tab:
                         "mrr_at_k": "{:.3f}",
                     }
                 ),
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
         st.caption(

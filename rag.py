@@ -12,12 +12,14 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from chromadb import PersistentClient
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_docling import DoclingLoader
 from langchain_ollama import ChatOllama, OllamaEmbeddings
@@ -89,7 +91,12 @@ def validate_citations(text: str, source_count: int) -> tuple[bool, tuple[str, .
     """Verify that a grounded answer uses only available numeric citations."""
     references = [int(value) for value in re.findall(r"\[(\d+)\]", text)]
     lowered = text.lower()
-    abstained = "do not know" in lowered or "not enough evidence" in lowered
+    abstained = (
+        lowered.strip().startswith(
+            ("i do not know", "there is not enough evidence", "not enough evidence")
+        )
+        and len(text.split()) <= 30
+    )
     warnings: list[str] = []
     if not references and not abstained:
         warnings.append("The generated answer contained no evidence citation.")
@@ -122,19 +129,103 @@ def validate_local_models(config: Settings = settings) -> list[str]:
     return [f"Missing Ollama model: {model}" for model in missing]
 
 
-def _embedding(config: Settings) -> OllamaEmbeddings:
-    return OllamaEmbeddings(
-        model=config.embedding_model,
-        base_url=config.ollama_base_url,
-    )
+def _embedding_prefixes(config: Settings) -> tuple[str, str]:
+    """Return model-recommended asymmetric document/query prompts."""
+    model = config.embedding_model.split(":", 1)[0]
+    if model == "nomic-embed-text":
+        return "search_document: ", "search_query: "
+    if model == "embeddinggemma":
+        return (
+            f"title: {config.embedding_document_title} | text: ",
+            "task: search result | query: ",
+        )
+    if model == "mxbai-embed-large":
+        return "", "Represent this sentence for searching relevant passages: "
+    return "", ""
+
+
+class _PromptedOllamaEmbeddings(Embeddings):
+    """Apply the same asymmetric embedding prompts used in the benchmark."""
+
+    def __init__(self, config: Settings) -> None:
+        self.document_prefix, self.query_prefix = _embedding_prefixes(config)
+        self.backend = OllamaEmbeddings(
+            model=config.embedding_model,
+            base_url=config.ollama_base_url,
+            num_ctx=config.embedding_context_tokens,
+        )
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return self.backend.embed_documents(
+            [f"{self.document_prefix}{text}" for text in texts]
+        )
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.backend.embed_query(f"{self.query_prefix}{text}")
+
+
+def _embedding(config: Settings) -> Embeddings:
+    return _PromptedOllamaEmbeddings(config)
+
+
+def _collection_metadata(config: Settings) -> dict[str, str | int]:
+    document_prefix, query_prefix = _embedding_prefixes(config)
+    return {
+        "hnsw:space": "cosine",
+        "embedding_model": config.embedding_model,
+        "embedding_num_ctx": config.embedding_context_tokens,
+        "embedding_document_prefix": document_prefix,
+        "embedding_query_prefix": query_prefix,
+        "chunk_words": config.chunk_words,
+        "chunk_overlap_words": config.chunk_overlap_words,
+    }
+
+
+def _validate_collection_metadata(
+    name: str,
+    count: int,
+    actual: dict[str, Any] | None,
+    expected: dict[str, str | int],
+) -> None:
+    """Refuse to query a populated collection built with another profile."""
+    if count == 0:
+        return
+    actual = actual or {}
+    mismatches = [
+        key for key, value in expected.items() if actual.get(key) != value
+    ]
+    if mismatches:
+        fields = ", ".join(mismatches)
+        raise RuntimeError(
+            f"Collection '{name}' is incompatible with the active retrieval "
+            f"profile ({fields}). Choose a fresh RAG_COLLECTION_NAME."
+        )
 
 
 def vector_store(config: Settings = settings) -> Chroma:
     config.ensure_directories()
+    metadata = _collection_metadata(config)
+    client = PersistentClient(path=str(config.chroma_dir))
+    existing = next(
+        (
+            collection
+            for collection in client.list_collections()
+            if collection.name == config.collection_name
+        ),
+        None,
+    )
+    if existing is not None:
+        _validate_collection_metadata(
+            config.collection_name,
+            existing.count(),
+            existing.metadata,
+            metadata,
+        )
     return Chroma(
         collection_name=config.collection_name,
         embedding_function=_embedding(config),
-        persist_directory=str(config.chroma_dir),
+        client=client,
+        collection_metadata=metadata,
     )
 
 
@@ -196,6 +287,62 @@ def _document_converter(config: Settings) -> DocumentConverter:
     )
 
 
+def _parse_page_numbers(value: Any) -> set[int]:
+    return {int(page) for page in re.findall(r"\d+", str(value or ""))}
+
+
+def rechunk_documents(
+    documents: Iterable[Document],
+    *,
+    chunk_words: int,
+    overlap_words: int,
+) -> list[Document]:
+    """Create deterministic word windows without crossing source/scope boundaries."""
+    if chunk_words < 1:
+        raise ValueError("chunk_words must be positive")
+    if not 0 <= overlap_words < chunk_words:
+        raise ValueError("overlap_words must satisfy 0 <= overlap < chunk_words")
+
+    groups: dict[tuple[str, str], list[Document]] = {}
+    for document in documents:
+        source = str(document.metadata.get("source", "unknown"))
+        scope = str(document.metadata.get("scope", "legacy"))
+        groups.setdefault((source, scope), []).append(document)
+
+    result: list[Document] = []
+    step = chunk_words - overlap_words
+    for (source, scope), source_documents in groups.items():
+        words: list[str] = []
+        word_pages: list[set[int]] = []
+        for document in source_documents:
+            document_words = document.page_content.split()
+            pages = _parse_page_numbers(document.metadata.get("pages"))
+            words.extend(document_words)
+            word_pages.extend([pages] * len(document_words))
+
+        for start in range(0, len(words), step):
+            end = min(start + chunk_words, len(words))
+            if end <= start:
+                break
+            pages = sorted({page for group in word_pages[start:end] for page in group})
+            metadata: dict[str, str | int] = {
+                "source": source,
+                "scope": scope,
+                "start_word": start,
+                "end_word": end,
+                "chunk_words": chunk_words,
+                "chunk_overlap_words": overlap_words,
+            }
+            if pages:
+                metadata["pages"] = ", ".join(str(page) for page in pages)
+            result.append(
+                Document(page_content=" ".join(words[start:end]), metadata=metadata)
+            )
+            if end == len(words):
+                break
+    return result
+
+
 def ingest(
     paths: Iterable[str | Path],
     config: Settings = settings,
@@ -236,6 +383,11 @@ def ingest(
             metadata["pages"] = pages
         documents.append(Document(page_content=chunk.page_content, metadata=metadata))
 
+    documents = rechunk_documents(
+        documents,
+        chunk_words=config.chunk_words,
+        overlap_words=config.chunk_overlap_words,
+    )
     vector_store(config).add_documents(documents, ids=_document_ids(documents))
     return len(documents)
 
@@ -250,8 +402,10 @@ PROMPT = ChatPromptTemplate.from_messages(
             "a direct answer when the evidence supports a "
             "reasonable paraphrase; for example, evidence about the most common "
             "or widely used practice can answer a question about the standard "
-            "approach. If the context does not contain enough evidence, say that "
-            "you do not know. Cite supporting passages only with the exact markers "
+            "approach. Keep the answer to one to four sentences and do not add "
+            "equations unless the question asks for them. If the context does not "
+            "contain enough evidence, say that you do not know. Cite supporting "
+            "passages only with the exact markers "
             "[1], [2], and so on. Do not invent or restate filenames, page numbers, "
             "footnotes, or source labels; the interface displays that metadata.",
         ),
@@ -264,9 +418,13 @@ CITATION_REPAIR_PROMPT = ChatPromptTemplate.from_messages(
         (
             "system",
             "Rewrite the draft using only claims directly supported by the supplied "
-            "evidence. Add the exact numeric markers [1], [2], and so on after the "
-            "claims they support. Never use a marker that is absent from the evidence. "
-            "If the evidence is insufficient, reply only: I do not know from the "
+            "evidence. Return one to three direct sentences, without equations or "
+            "background that the question did not request. Preserve the draft's core "
+            "conclusion when the evidence supports it. Evidence that states what most "
+            "practical problems use supports a question about the standard approach. "
+            "Add the exact numeric markers [1], [2], and so on after every supported "
+            "claim. Never use a marker that is absent from the evidence. Only if no "
+            "passage answers the question, reply exactly: I do not know from the "
             "available evidence.",
         ),
         (
@@ -411,7 +569,7 @@ def retrieve(
         search_query = (
             f"{question}\n\n"
             "Possible domain vocabulary for semantic retrieval only:\n"
-            f"{retrieval_hint[:1500]}"
+            f"{retrieval_hint[:400]}"
         )
     normalized_scope = normalize_scope(scope or config.default_scope)
     threshold = (

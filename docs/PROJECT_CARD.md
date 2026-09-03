@@ -25,7 +25,7 @@ visible and testable instead of hiding them behind a chat interface.
 
 | Evidence | Result |
 |---|---:|
-| Unit tests | 27 passing |
+| Unit tests | 30 passing |
 | Static checks | Ruff passing |
 | Packaged entry point | Editable wheel installed and executed |
 | Reference thermal case | Validation passed |
