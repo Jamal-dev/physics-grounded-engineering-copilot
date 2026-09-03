@@ -1,0 +1,11 @@
+[server]
+address = "127.0.0.1"
+headless = true
+maxUploadSize = 500
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#5BC0BE"

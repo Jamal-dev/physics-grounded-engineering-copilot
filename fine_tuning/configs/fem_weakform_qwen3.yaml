@@ -1,0 +1,62 @@
+# Example only: the pipeline itself is not tied to Qwen or to FEM.
+model:
+  name_or_path: Qwen/Qwen3-0.6B
+  init_kwargs:
+    trust_remote_code: false
+  tokenizer_kwargs:
+    trust_remote_code: false
+
+data:
+  train_file: ../../.local_data/fem_weakform/fem_weakform_sft_train.jsonl
+  validation_file: ../../.local_data/fem_weakform/fem_weakform_sft_val.jsonl
+  test_file: ../../.local_data/fem_weakform/fem_weakform_sft_test.jsonl
+
+output_dir: ../../.data/fine_tuning/fem_weakform_qwen3
+
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  # PEFT selects every compatible linear layer except the output head. This is
+  # portable across common decoder-only architectures. Replace it with a list
+  # of module suffixes only when an architecture requires more control.
+  target_modules: all-linear
+  task_type: CAUSAL_LM
+  bias: none
+
+sft:
+  use_cpu: auto
+  bf16: auto
+  fp16: auto
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 8
+  learning_rate: 0.0001
+  num_train_epochs: 3
+  warmup_steps: 0.05
+  logging_steps: 5
+  eval_strategy: epoch
+  save_strategy: epoch
+  save_total_limit: 2
+  max_length: 2048
+  # Current TRL requires a supported Flash Attention implementation to isolate
+  # packed examples reliably; keep this off for the CPU reference setup.
+  packing: false
+  assistant_only_loss: true
+  gradient_checkpointing: false
+  optim: adamw_torch
+  report_to: none
+
+# These keyword arguments are passed to tokenizer.apply_chat_template.
+chat_template:
+  enable_thinking: false
+
+# Deterministic generation is important when comparing the four conditions.
+generation:
+  max_new_tokens: 1200
+  do_sample: false
+
+evaluation:
+  json_fields:
+    - status
+    - boundary_condition_assessment.sufficient

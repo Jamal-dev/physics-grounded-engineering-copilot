@@ -1,0 +1,15 @@
+{
+  "request": "Run a one-dimensional thermal-diffusion simulation for 3600 seconds with diffusivity 1.2e-5 m2/s, length 1 m, and 101 grid points.",
+  "planner_model": "llama3.2:3b",
+  "selected_action": "simulate_thermal_diffusion",
+  "grounded_arguments": {
+    "diffusivity_m2_s": 0.000012,
+    "length_m": 1.0,
+    "duration_s": 3600.0,
+    "points": 101
+  },
+  "unstated_planner_arguments_removed": true,
+  "tool_validation_passed": true,
+  "relative_l2_error": 0.000045332831117811745,
+  "max_abs_error_k": 0.007220163325200701
+}

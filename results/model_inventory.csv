@@ -1,0 +1,5 @@
+"model","digest","size_bytes","embedding_dimension","context_tokens","document_prefix","query_prefix"
+"all-minilm","1b226e2802dbb772b5fc32a58f103ca1804ef7501331012de126ab22f67475ef","45960996","384","512","",""
+"nomic-embed-text","0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f","274302450","768","2048","search_document: ","search_query: "
+"embeddinggemma","85462619ee721b466c5927d109d4cb765861907d5417b9109caebc4e614679f1","621875917","768","2048","title: Theory of Porous Media | text: ","task: search result | query: "
+"mxbai-embed-large","468836162de7f81e041c43663fedbbba921dcea9b9fefea135685a39b2d83dd8","669615493","1024","512","","Represent this sentence for searching relevant passages: "

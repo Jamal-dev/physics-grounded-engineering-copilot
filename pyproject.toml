@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "physics-grounded-engineering-copilot"
+version = "0.2.0"
+description = "A locally reproducible RAG and validated simulation workflow for engineering evidence"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [{name = "Jamal Ahmed Bhatti"}]
+dependencies = [
+  "chromadb==1.5.9",
+  "docling==2.124.0",
+  "langchain==1.3.18",
+  "langchain-chroma==1.1.0",
+  "langchain-docling==3.0.0",
+  "langchain-ollama==1.1.0",
+  "langchain-openai==1.6.0",
+  "matplotlib==3.10.8",
+  "nbclient==0.10.4",
+  "nbformat==5.10.4",
+  "numpy==2.4.2",
+  "pandas==2.3.3",
+  "python-dotenv==1.2.3",
+  "pyyaml>=6.0,<7",
+  "requests==2.34.2",
+  "streamlit==1.63.0",
+]
+
+[project.optional-dependencies]
+dev = ["coverage[toml]>=7.6", "pytest>=8.3", "ruff>=0.11"]
+finetune = [
+  "accelerate>=1.4",
+  "bitsandbytes>=0.45; platform_system == 'Linux'",
+  "datasets>=3.3",
+  "peft>=0.14",
+  "torch>=2.4",
+  "transformers>=4.49",
+  "trl>=0.16",
+]
+
+[project.scripts]
+engineering-rag = "cli:main"
+engineering-physics = "physics_cli:main"
+
+[tool.setuptools]
+py-modules = ["app", "cli", "config", "engineering_agent", "physics_cli", "rag"]
+packages = ["engineering", "experiments", "fine_tuning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["engineering", "experiments", "rag"]

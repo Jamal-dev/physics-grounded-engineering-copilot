@@ -1,0 +1,43 @@
+{
+  "benchmark": {
+    "development": 35,
+    "questions": 50,
+    "test": 15
+  },
+  "chunk_sizes_words": [
+    200,
+    400,
+    800
+  ],
+  "corpus_scope": {
+    "docling_records": 447,
+    "first_page": 298,
+    "last_page": 483,
+    "words": 57071
+  },
+  "corpus_sha256": "d8577f8795140f33454f98a958610d7d9d17398ac3ef3168adc8dee575e1a126",
+  "embedding_options": {
+    "num_ctx": "Each model's declared context limit",
+    "similarity": "cosine over L2-normalized embeddings",
+    "truncate": true
+  },
+  "metric": "Recall@k requires a retrieved chunk to overlap the labeled page(s) and contain every reviewed evidence term.",
+  "models": [
+    "all-minilm",
+    "nomic-embed-text",
+    "embeddinggemma",
+    "mxbai-embed-large"
+  ],
+  "overlap_words": [
+    0,
+    50,
+    100
+  ],
+  "questions_sha256": "9ae4d713b9c560e534c9c05e15d8f5988709ec759ef1deaec689b8b3ce726a1a",
+  "top_k": [
+    1,
+    3,
+    5,
+    10
+  ]
+}

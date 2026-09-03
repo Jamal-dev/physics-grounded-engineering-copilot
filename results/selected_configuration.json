@@ -1,0 +1,49 @@
+{
+  "held_out_test": [
+    {
+      "k": 1,
+      "mrr_at_k": 0.6666666666666666,
+      "page_recall_at_k": 0.8666666666666667,
+      "questions": 15,
+      "recall_at_k": 0.6666666666666666,
+      "recall_ci_high": 0.8482389930530876,
+      "recall_ci_low": 0.41713125151212976
+    },
+    {
+      "k": 3,
+      "mrr_at_k": 0.788888888888889,
+      "page_recall_at_k": 1.0,
+      "questions": 15,
+      "recall_at_k": 0.9333333333333333,
+      "recall_ci_high": 0.9881334113938051,
+      "recall_ci_low": 0.7018292244757601
+    },
+    {
+      "k": 5,
+      "mrr_at_k": 0.8022222222222222,
+      "page_recall_at_k": 1.0,
+      "questions": 15,
+      "recall_at_k": 1.0,
+      "recall_ci_high": 1.0,
+      "recall_ci_low": 0.7961107336956521
+    },
+    {
+      "k": 10,
+      "mrr_at_k": 0.8022222222222222,
+      "page_recall_at_k": 1.0,
+      "questions": 15,
+      "recall_at_k": 1.0,
+      "recall_ci_high": 1.0,
+      "recall_ci_low": 0.7961107336956521
+    }
+  ],
+  "selected_configuration": {
+    "chunk_words": 200,
+    "development_mrr_at_5": 0.8047619047619048,
+    "development_recall_at_5": 0.9428571428571428,
+    "model": "embeddinggemma",
+    "overlap_words": 50
+  },
+  "selected_on": "development",
+  "selection_rule": "Highest development evidence Recall@5; ties broken by development MRR@5, retrieval latency, smaller chunks, lower overlap, then model name."
+}

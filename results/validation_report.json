@@ -1,0 +1,24 @@
+{
+  "assessment": "Ready to share with caveats",
+  "checks": {
+    "aggregate_max_absolute_error": {
+      "mrr": 2.220446049250313e-16,
+      "page_recall": 1.1102230246251565e-16,
+      "recall": 1.1102230246251565e-16
+    },
+    "confidence_intervals_contain_estimates": true,
+    "detail_rows": 7200,
+    "models": 4,
+    "questions": 50,
+    "recall_monotonic_in_k": true,
+    "selected_test_questions": 15,
+    "selected_test_recall_at_5_hits": 15,
+    "selection_recomputed": true,
+    "summary_rows": 432
+  },
+  "required_caveats": [
+    "The held-out split contains 15 questions and has wide confidence intervals.",
+    "The benchmark covers one technical section of one engineering textbook.",
+    "Retrieval recall is not a complete measure of generated-answer correctness."
+  ]
+}
