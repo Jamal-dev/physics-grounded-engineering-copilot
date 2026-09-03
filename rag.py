@@ -109,6 +109,17 @@ def validate_citations(text: str, source_count: int) -> tuple[bool, tuple[str, .
     return not warnings, tuple(warnings)
 
 
+def _strip_model_preface(text: str) -> str:
+    """Remove a short meta-introduction while preserving the actual answer."""
+    return re.sub(
+        r"^\s*Here (?:is|'s) [^:\n]{1,100}:\s*",
+        "",
+        text,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+
+
 def ollama_models(config: Settings = settings) -> set[str]:
     response = requests.get(f"{config.ollama_base_url}/api/tags", timeout=5)
     response.raise_for_status()
@@ -497,6 +508,7 @@ def ask(
     text = response.content
     if not isinstance(text, str):
         text = json.dumps(text, default=str)
+    text = _strip_model_preface(text)
     citation_valid, citation_warnings = validate_citations(
         text, len(retrieved.sources)
     )
@@ -513,6 +525,7 @@ def ask(
         repaired = repaired_response.content
         if not isinstance(repaired, str):
             repaired = json.dumps(repaired, default=str)
+        repaired = _strip_model_preface(repaired)
         repaired_valid, repaired_warnings = validate_citations(
             repaired, len(retrieved.sources)
         )

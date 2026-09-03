@@ -11,6 +11,7 @@ from rag import (
     _embedding_prefixes,
     _page_label,
     _scalar_metadata,
+    _strip_model_preface,
     _validate_collection_metadata,
     contains_prompt_injection,
     normalize_scope,
@@ -107,6 +108,15 @@ class RagHelperTests(unittest.TestCase):
                 "I do not know whether there is one standard approach.",
                 2,
             )[0]
+        )
+
+    def test_short_model_preface_is_removed(self) -> None:
+        self.assertEqual(
+            _strip_model_preface(
+                "Here is the rewritten draft with only supported claims:\n\n"
+                "Biot's theory is commonly used [2]."
+            ),
+            "Biot's theory is commonly used [2].",
         )
 
     def test_retrieval_enforces_scope_score_and_instruction_gates(self) -> None:
